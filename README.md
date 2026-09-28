@@ -75,3 +75,67 @@ caught it at compile time, at the exact line, before the program ever ran.
   output directly with Node — no TypeScript involved at that point. This is why production
   systems run compiled JavaScript rather than TypeScript directly: the checking already
   happened once, during the build.
+
+
+  
+## Day 3 - Node.js, HTTP & Express REST API
+
+### Install and run
+```
+npm install
+npm run dev
+```
+The server starts on http://localhost:3000. To use another port in PowerShell:
+```
+$env:PORT=4000; npm run dev
+```
+
+### Build and start (production style)
+```
+npm run build
+npm run start
+```
+`build` compiles TypeScript from `src/` into JavaScript in `dist/`. `start` runs the compiled `dist/server.js` with plain Node.
+
+### Endpoints
+| Method | Endpoint | Purpose | Success |
+|---|---|---|---|
+| GET | /health | Health check | 200 |
+| GET | /tasks | List tasks (optional `?status=todo`) | 200 |
+| GET | /tasks/:id | Get one task | 200 / 404 |
+| POST | /tasks | Create a task | 201 |
+| PATCH | /tasks/:id | Update a task | 200 / 404 |
+| DELETE | /tasks/:id | Delete a task | 204 / 404 |
+
+Invalid input returns 400. Unknown routes return 404. Unexpected errors return 500 with a generic message (internal details are logged on the server, never sent to the client).
+
+Example - create a task:
+```
+POST /tasks
+Content-Type: application/json
+
+{ "title": "Write API docs", "assignee": "Sam", "priority": "high" }
+```
+Response (201):
+```
+{ "success": true, "data": { "id": 9, "title": "Write API docs", "status": "todo", ... } }
+```
+
+### Testing
+All requests are saved in `requests.http` (VS Code REST Client extension). Each request has a comment with its expected status code.
+
+### Project structure
+- `src/app.ts` - creates the Express app, registers middleware and routes
+- `src/server.ts` - starts the server on `process.env.PORT` (fallback 3000)
+- `src/routes/` - maps URLs and methods to controller functions
+- `src/controllers/` - handles HTTP: reads input, validates it, chooses status codes
+- `src/services/` - task logic and in-memory data, with no HTTP code
+- `src/models/` - the Task types
+- `src/middleware/` - request logger and error handler
+
+### Learning notes
+- Request flow: HTTP request -> logger middleware -> express.json() -> route -> controller -> service -> response.
+- `express.json()` parses JSON request bodies. Without it, `req.body` is undefined.
+- POST returns 201 (a new resource was created); a successful GET returns 200.
+- Types only exist at compile time, so the controller uses runtime checks (type guards) on the incoming request data.
+- Keeping everything in one file would make it hard to find, test and change code as the app grows. Separate layers give each piece one job.
