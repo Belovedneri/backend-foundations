@@ -67,3 +67,7 @@ export function getSummary(): ApiResponse<{ total: number; countsByStatus: Recor
 
   return { success: true, data: { total, countsByStatus } }
 }
+
+export function getAllTasks(): Task[] {
+  return [...tasks]
+}
