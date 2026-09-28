@@ -1,5 +1,50 @@
 # Backend Foundations
 
+
+## Project overview
+A Task/Project Management REST API, built incrementally over three days: in-memory JavaScript logic (Day 1), converted to TypeScript with typed models (Day 2), and exposed as an Express REST API (Day 3). Data is stored in memory for now; PostgreSQL, authentication, caching and testing are introduced in later phases of this track.
+
+## Technologies used
+- Node.js
+- TypeScript
+- Express
+- tsx (development runtime)
+- npm
+
+## Prerequisites
+- Node.js (LTS recommended)
+- npm (bundled with Node.js)
+- Git
+
+## Installation
+```
+git clone https://github.com/Belovedneri/backend-foundations.git
+cd backend-foundations
+npm install
+```
+
+## Environment variables
+This project currently uses one optional environment variable:
+
+| Variable | Purpose | Default |
+|---|---|---|
+| PORT | Port the Express server listens on | 3000 |
+
+No `.env` file is required to run the project as-is. A `.env.example` file is included as a placeholder for when real configuration/secrets are introduced in a later phase. Never commit a real `.env` file - it is already excluded in `.gitignore`.
+
+## Challenges encountered
+- **Day 1:** Understanding that JavaScript silently returns `undefined` for a missing object property or array index instead of throwing an error - solved by deliberately testing this in the Node REPL and building the habit of explicit checks (`try/catch`, validation) rather than assuming data is present.
+- **Day 2:** Converting untyped JavaScript to TypeScript surfaced places where data shapes weren't as strict as assumed. Solved by defining `TaskStatus`/`TaskPriority` as union types and a `Task` interface, then fixing every compiler error `npx tsc --noEmit` reported until the project compiled cleanly. Also ran a deliberate type-safety challenge (documented below) to see a real compiler error caught before runtime.
+- **Day 3:** TypeScript's compile-time checks don't protect against real HTTP requests, since incoming data has no type information. Solved by adding runtime type guards (e.g. `isTaskStatus`) and manual field validation in the controllers, returning `400` for bad input instead of letting invalid data reach the service layer.
+
+## What I can now explain confidently
+- The difference between compile-time type checking and runtime behavior.
+- How union types and interfaces restrict values vs. object shapes.
+- Why `any` removes most of TypeScript's value, and why `unknown` with type guards is safer.
+- The request lifecycle: route -> middleware -> controller -> service -> response.
+- Why `POST` returns `201` and a successful `GET` returns `200`.
+- Why splitting code into routes/controllers/services matters as an app grows.
+
 Foundation of a Task/Project Management REST API - built with Node.js, Express and Typescript.
 
 
