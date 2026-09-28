@@ -1,4 +1,4 @@
-import type { Task } from './types.js'
+import type { Task } from '../models/task.js'
 
 export const tasks: Task[] = [
   { id: 1, title: "Set up project repo", description: "Initialize repo and folder structure", status: "done", priority: "high", assignee: "Sam", createdAt: new Date("2026-09-20") },

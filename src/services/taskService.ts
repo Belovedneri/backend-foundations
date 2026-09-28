@@ -1,6 +1,6 @@
-import type { Task, TaskStatus } from './types.js'
+import type { Task, TaskStatus } from '../models/task.js'
 import { tasks } from './data.js'
-import type { ApiResponse } from './apiResponse.js'
+import type { ApiResponse } from '../models/apiResponse.js'
 
 // --- ADD A TASK ---
 // Omit<Task, 'id' | 'createdAt'> means: "a Task, but WITHOUT the id and

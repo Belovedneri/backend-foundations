@@ -1,4 +1,4 @@
-import { addTask, findTaskById, filterByStatus, updateTask, deleteTask, getSummary } from './taskService.js'
+import { addTask, findTaskById, filterByStatus, updateTask, deleteTask, getSummary } from './services/taskService.js'
 
 console.log('--- Summary before changes ---')
 console.log(getSummary())
