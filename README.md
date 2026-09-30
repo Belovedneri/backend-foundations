@@ -184,3 +184,46 @@ All requests are saved in `requests.http` (VS Code REST Client extension). Each 
 - POST returns 201 (a new resource was created); a successful GET returns 200.
 - Types only exist at compile time, so the controller uses runtime checks (type guards) on the incoming request data.
 - Keeping everything in one file would make it hard to find, test and change code as the app grows. Separate layers give each piece one job.
+
+
+## Day 4 - PostgreSQL and SQL Fundamentals
+
+### Database setup
+1. Install PostgreSQL locally (includes the `psql` command-line client).
+2. Create the database:
+```
+createdb -U postgres backend_internship
+```
+3. Run the schema and seed files:
+```
+psql -U postgres -d backend_internship -f database/schema.sql
+psql -U postgres -d backend_internship -f database/seed.sql
+```
+4. Connect and explore:
+```
+psql -U postgres -d backend_internship
+```
+
+### Files
+- `database/schema.sql` - creates the `users`, `projects` and `tasks` tables, their constraints, and one index
+- `database/seed.sql` - inserts 5 users, 3 projects and 12 tasks for testing
+- `database/queries.sql` - practice queries covering SELECT, WHERE, JOIN, UPDATE, pagination and an aggregate
+
+### Why the data moved out of JavaScript arrays
+In Days 1-3, all task data lived in a plain array in memory. Restarting the server wiped out anything added at runtime, because the array only existed in RAM while the process was running. PostgreSQL stores data on disk, in a separate process, so the data survives a server restart, a crash, or a full computer reboot. I confirmed this directly: after inserting 12 tasks, disconnecting from `psql` completely, and reconnecting fresh, all 12 tasks were still there.
+
+### Key concepts
+**Primary key vs foreign key:** A primary key (`id` in each table) is the unique identifier for a row in its own table. A foreign key (e.g. `tasks.project_id`) is a column that holds a value copied from another table's primary key, used to link two tables together. PostgreSQL enforces this - you cannot insert a task with a `project_id` that doesn't exist in the `projects` table.
+
+**JOIN:** Combines matching rows from two tables into one result, based on a condition (usually a foreign key matching a primary key). For example, joining `tasks` to `projects` on `tasks.project_id = projects.id` lets a query show each task's actual project name instead of just a number.
+
+**Index:** A separate, sorted structure PostgreSQL uses to find matching rows quickly, instead of scanning every row in a table. I added one index: `CREATE INDEX idx_tasks_project_id ON tasks(project_id);` - chosen because filtering tasks by project (`WHERE project_id = ...`) will be the most common query once the API is built, and this is the column that query filters on. Not every column is indexed, because each index adds storage overhead and slows down INSERT/UPDATE/DELETE operations, since every index on a table has to be updated whenever a row changes.
+
+**ON DELETE CASCADE vs ON DELETE SET NULL:** `tasks.project_id` uses `CASCADE` - deleting a project deletes its tasks too, since a task cannot exist without a project. `tasks.assigned_to` uses `SET NULL` - deleting a user does not delete their tasks, it just unassigns them, since a task can still exist without an assignee.
+
+### Learning notes
+- An array in memory disappears when the process restarts; a database is separate software writing to disk, so it survives independently of the application process.
+- `SELECT *` returns every column, including sensitive ones like `password_hash` - naming specific columns avoids accidentally exposing data an API should never send back.
+- `WHERE` on an UPDATE or DELETE is critical - without it, the statement applies to every row in the table.
+- `LIMIT`/`OFFSET` implement pagination; `ORDER BY` is required alongside them so pages are consistent and don't overlap.
+- `GROUP BY` combined with an aggregate function (like `COUNT`) collapses many rows into one summary row per group.
