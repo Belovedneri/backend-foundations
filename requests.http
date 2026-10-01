@@ -53,3 +53,34 @@ DELETE http://localhost:3000/tasks/2
 
 ### 11. Get the deleted task (expect 404)
 GET http://localhost:3000/tasks/2
+
+
+### 12. List all projects (expect 200, real PostgreSQL data)
+GET http://localhost:3000/projects
+
+
+### 13. Create a project (expect 201)
+POST http://localhost:3000/projects
+Content-Type: application/json
+
+{
+  "name": "API Documentation",
+  "description": "Write full API docs",
+  "ownerId": 3
+}
+
+
+### 14. Get one project (expect 200)
+GET http://localhost:3000/projects/1
+
+### 15. Get an unknown project (expect 404)
+GET http://localhost:3000/projects/9999
+
+
+### 16. Update a project (expect 200)
+PATCH http://localhost:3000/projects/1
+Content-Type: application/json
+
+{
+  "description": "Refresh the company website - Q4 priority"
+}
