@@ -84,3 +84,44 @@ Content-Type: application/json
 {
   "description": "Refresh the company website - Q4 priority"
 }
+
+### 17. Create a task under project 1 (expect 201)
+POST http://localhost:3000/projects/1/tasks
+Content-Type: application/json
+
+{
+  "title": "Review Day 5 pull request",
+  "description": "Check the PostgreSQL integration",
+  "priority": "high",
+  "assignedTo": 2
+}
+
+### 18. List tasks for project 1 (expect 200)
+GET http://localhost:3000/projects/1/tasks
+
+### 19. Create a task under a missing project (expect 404)
+POST http://localhost:3000/projects/9999/tasks
+Content-Type: application/json
+
+{
+  "title": "This should fail"
+}
+
+### 20. Update a task's status (expect 200)
+PATCH http://localhost:3000/tasks/1
+Content-Type: application/json
+
+{
+  "status": "done"
+}
+
+### 21. Update an unknown task (expect 404)
+PATCH http://localhost:3000/tasks/9999
+Content-Type: application/json
+
+{
+  "status": "done"
+}
+
+### 22. Delete a task (expect 204)
+DELETE http://localhost:3000/tasks/1
