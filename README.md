@@ -227,3 +227,55 @@ In Days 1-3, all task data lived in a plain array in memory. Restarting the serv
 - `WHERE` on an UPDATE or DELETE is critical - without it, the statement applies to every row in the table.
 - `LIMIT`/`OFFSET` implement pagination; `ORDER BY` is required alongside them so pages are consistent and don't overlap.
 - `GROUP BY` combined with an aggregate function (like `COUNT`) collapses many rows into one summary row per group.
+
+
+## Day 5 - Express + PostgreSQL Integration
+
+### Setup
+1. Complete the Day 4 database setup (schema.sql and seed.sql).
+2. Create a `.env` file in the project root (copy `.env.example` and fill in real values):
+```
+PORT=3000
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/backend_internship
+JWT_SECRET=replace_me
+```
+3. Install dependencies and start the server as usual:
+```
+npm install
+npm run dev
+```
+
+### Architecture
+```
+HTTP Request -> Route -> Middleware -> Controller -> Service -> Repository -> PostgreSQL
+```
+- **Route** - maps a URL and method to a controller function.
+- **Controller** - handles HTTP: reads the request, validates input, picks the status code.
+- **Service** - business rules, independent of HTTP and independent of SQL.
+- **Repository** - the only layer that writes raw SQL and talks to PostgreSQL directly.
+
+### New endpoints (PostgreSQL-backed)
+| Method | Endpoint | Purpose | Success |
+|---|---|---|---|
+| POST | /projects | Create project | 201 |
+| GET | /projects | List projects | 200 |
+| GET | /projects/:id | Get one project | 200 / 404 |
+| PATCH | /projects/:id | Update project | 200 / 404 |
+| DELETE | /projects/:id | Delete project | 204 / 404 |
+| POST | /projects/:id/tasks | Create task under a project | 201 / 404 (unknown project) |
+| GET | /projects/:id/tasks | List a project's tasks | 200 / 404 (unknown project) |
+| PATCH | /tasks/:id | Update task | 200 / 404 |
+| DELETE | /tasks/:id | Delete task | 204 / 404 |
+
+### Parameterized queries
+Every repository query uses placeholders (`$1`, `$2`, ...) with values passed as a separate array, instead of building SQL strings by concatenating user input directly. This prevents SQL injection: PostgreSQL always treats placeholder values as data, never as part of the SQL command itself, no matter what characters the input contains.
+
+### Persistence proof
+Created a task, restarted the server completely (`Ctrl+C` then `npm run dev`), and confirmed with `GET /projects/1/tasks` that the task was still there - along with a previously deleted task staying deleted. This confirms data now lives in PostgreSQL, independent of the Node process, unlike the in-memory arrays from Days 1-3.
+
+### Learning notes
+- A repository is the only layer allowed to contain raw SQL. Controllers and services never see SQL directly, which means the database could be swapped later without touching HTTP or business logic code.
+- `$1`/`$2` parameterized queries are a security requirement, not a style choice - they stop SQL injection by keeping user input separate from the SQL command structure.
+- `async`/`await` is essential here because a database query takes real time (a round trip to PostgreSQL), unlike the instant in-memory array operations from Days 1-3.
+- Checking that a parent resource exists (e.g. a project) before creating a child resource (a task) gives a clean 404 instead of letting a foreign key constraint fail with a confusing 500 error.
+- `RETURNING *` in an INSERT or UPDATE statement returns the affected row immediately, avoiding a second query just to see what changed.
