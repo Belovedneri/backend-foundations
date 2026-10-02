@@ -125,3 +125,34 @@ Content-Type: application/json
 
 ### 22. Delete a task (expect 204)
 DELETE http://localhost:3000/tasks/1
+
+
+### 23. Register a new user (expect 201)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "name": "Taylor Morgan",
+  "email": "taylor@example.com",
+  "password": "supersecret123"
+}
+
+### 24. Register with the same email again (expect 409)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "name": "Someone Else",
+  "email": "taylor@example.com",
+  "password": "anotherpassword"
+}
+
+### 25. Register with a short password (expect 400)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "name": "Short Pass",
+  "email": "short@example.com",
+  "password": "abc"
+}
