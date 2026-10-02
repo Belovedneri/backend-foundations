@@ -1,0 +1,127 @@
+### 1. Health check (expect 200)
+GET http://localhost:3000/health
+
+### 2. Create a task with valid data (expect 201)
+POST http://localhost:3000/tasks
+Content-Type: application/json
+
+{
+  "title": "Write API docs",
+  "description": "Document every endpoint",
+  "priority": "high",
+  "assignee": "Sam"
+}
+
+### 3. Create a task with missing title (expect 400)
+POST http://localhost:3000/tasks
+Content-Type: application/json
+
+{
+  "assignee": "Sam"
+}
+
+### 4. List all tasks (expect 200)
+GET http://localhost:3000/tasks
+
+### 5. List tasks filtered by status (expect 200)
+GET http://localhost:3000/tasks?status=done
+
+### 6. Get one task (expect 200)
+GET http://localhost:3000/tasks/1
+
+### 7. Get an unknown task (expect 404)
+GET http://localhost:3000/tasks/9999
+
+### 8. Update a task (expect 200)
+PATCH http://localhost:3000/tasks/1
+Content-Type: application/json
+
+{
+  "status": "in-progress"
+}
+
+### 9. Update with an invalid status (expect 400)
+PATCH http://localhost:3000/tasks/1
+Content-Type: application/json
+
+{
+  "status": "finished"
+}
+
+### 10. Delete a task (expect 204)
+DELETE http://localhost:3000/tasks/2
+
+### 11. Get the deleted task (expect 404)
+GET http://localhost:3000/tasks/2
+
+
+### 12. List all projects (expect 200, real PostgreSQL data)
+GET http://localhost:3000/projects
+
+
+### 13. Create a project (expect 201)
+POST http://localhost:3000/projects
+Content-Type: application/json
+
+{
+  "name": "API Documentation",
+  "description": "Write full API docs",
+  "ownerId": 3
+}
+
+
+### 14. Get one project (expect 200)
+GET http://localhost:3000/projects/1
+
+### 15. Get an unknown project (expect 404)
+GET http://localhost:3000/projects/9999
+
+
+### 16. Update a project (expect 200)
+PATCH http://localhost:3000/projects/1
+Content-Type: application/json
+
+{
+  "description": "Refresh the company website - Q4 priority"
+}
+
+### 17. Create a task under project 1 (expect 201)
+POST http://localhost:3000/projects/1/tasks
+Content-Type: application/json
+
+{
+  "title": "Review Day 5 pull request",
+  "description": "Check the PostgreSQL integration",
+  "priority": "high",
+  "assignedTo": 2
+}
+
+### 18. List tasks for project 1 (expect 200)
+GET http://localhost:3000/projects/1/tasks
+
+### 19. Create a task under a missing project (expect 404)
+POST http://localhost:3000/projects/9999/tasks
+Content-Type: application/json
+
+{
+  "title": "This should fail"
+}
+
+### 20. Update a task's status (expect 200)
+PATCH http://localhost:3000/tasks/1
+Content-Type: application/json
+
+{
+  "status": "done"
+}
+
+### 21. Update an unknown task (expect 404)
+PATCH http://localhost:3000/tasks/9999
+Content-Type: application/json
+
+{
+  "status": "done"
+}
+
+### 22. Delete a task (expect 204)
+DELETE http://localhost:3000/tasks/1
