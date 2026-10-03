@@ -184,3 +184,15 @@ Content-Type: application/json
   "email": "nobody@example.com",
   "password": "whatever123"
 }
+
+
+### 29. GET /users/me with no token (expect 401)
+GET http://localhost:3000/users/me
+
+### 30. GET /users/me with an invalid/malformed token (expect 401)
+GET http://localhost:3000/users/me
+Authorization: Bearer this.is.not.a.real.token
+
+### 31. GET /users/me with a valid token (expect 200)
+GET http://localhost:3000/users/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGF5bG9yQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTEwMDg5NzMsImV4cCI6MTc5MTAxNjE3M30.61vwomKJf9o2eC9YgV3683s3NG2ap8vtmmX52kLQgRA
