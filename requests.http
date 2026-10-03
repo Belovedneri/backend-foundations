@@ -286,3 +286,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtY
   "title": "Bad status test",
   "status": "almost-done"
 }
+
+
+### 43. Duplicate email registration (expect 409)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "name": "Duplicate Test",
+  "email": "taylor@example.com",
+  "password": "anotherpassword123"
+}
