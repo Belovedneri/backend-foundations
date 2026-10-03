@@ -1,0 +1,299 @@
+### 1. Health check (expect 200)
+GET http://localhost:3000/health
+
+### 2. Create a task with valid data (expect 201)
+POST http://localhost:3000/tasks
+Content-Type: application/json
+
+{
+  "title": "Write API docs",
+  "description": "Document every endpoint",
+  "priority": "high",
+  "assignee": "Sam"
+}
+
+### 3. Create a task with missing title (expect 400)
+POST http://localhost:3000/tasks
+Content-Type: application/json
+
+{
+  "assignee": "Sam"
+}
+
+### 4. List all tasks (expect 200)
+GET http://localhost:3000/tasks
+
+### 5. List tasks filtered by status (expect 200)
+GET http://localhost:3000/tasks?status=done
+
+### 6. Get one task (expect 200)
+GET http://localhost:3000/tasks/1
+
+### 7. Get an unknown task (expect 404)
+GET http://localhost:3000/tasks/9999
+
+### 8. Update a task (expect 200)
+PATCH http://localhost:3000/tasks/1
+Content-Type: application/json
+
+{
+  "status": "in-progress"
+}
+
+### 9. Update with an invalid status (expect 400)
+PATCH http://localhost:3000/tasks/1
+Content-Type: application/json
+
+{
+  "status": "finished"
+}
+
+### 10. Delete a task (expect 204)
+DELETE http://localhost:3000/tasks/2
+
+### 11. Get the deleted task (expect 404)
+GET http://localhost:3000/tasks/2
+
+
+### 12. List all projects (expect 200, real PostgreSQL data)
+GET http://localhost:3000/projects
+
+
+### 13. Create a project (expect 201)
+POST http://localhost:3000/projects
+Content-Type: application/json
+
+{
+  "name": "API Documentation",
+  "description": "Write full API docs",
+  "ownerId": 3
+}
+
+
+### 14. Get one project (expect 200)
+GET http://localhost:3000/projects/1
+
+### 15. Get an unknown project (expect 404)
+GET http://localhost:3000/projects/9999
+
+
+### 16. Update a project (expect 200)
+PATCH http://localhost:3000/projects/1
+Content-Type: application/json
+
+{
+  "description": "Refresh the company website - Q4 priority"
+}
+
+### 17. Create a task under project 1 (expect 201)
+POST http://localhost:3000/projects/1/tasks
+Content-Type: application/json
+
+{
+  "title": "Review Day 5 pull request",
+  "description": "Check the PostgreSQL integration",
+  "priority": "high",
+  "assignedTo": 2
+}
+
+### 18. List tasks for project 1 (expect 200)
+GET http://localhost:3000/projects/1/tasks
+
+### 19. Create a task under a missing project (expect 404)
+POST http://localhost:3000/projects/9999/tasks
+Content-Type: application/json
+
+{
+  "title": "This should fail"
+}
+
+### 20. Update a task's status (expect 200)
+PATCH http://localhost:3000/tasks/1
+Content-Type: application/json
+
+{
+  "status": "done"
+}
+
+### 21. Update an unknown task (expect 404)
+PATCH http://localhost:3000/tasks/9999
+Content-Type: application/json
+
+{
+  "status": "done"
+}
+
+### 22. Delete a task (expect 204)
+DELETE http://localhost:3000/tasks/1
+
+
+### 23. Register a new user (expect 201)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "name": "Taylor Morgan",
+  "email": "taylor@example.com",
+  "password": "supersecret123"
+}
+
+### 24. Register with the same email again (expect 409)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "name": "Someone Else",
+  "email": "taylor@example.com",
+  "password": "anotherpassword"
+}
+
+### 25. Register with a short password (expect 400)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "name": "Short Pass",
+  "email": "short@example.com",
+  "password": "abc"
+}
+
+### 26. Login with correct credentials (expect 200)
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "taylor@example.com",
+  "password": "supersecret123"
+}
+
+### 27. Login with wrong password (expect 401)
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "taylor@example.com",
+  "password": "wrongpassword"
+}
+
+### 28. Login with an email that doesn't exist (expect 401)
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "nobody@example.com",
+  "password": "whatever123"
+}
+
+
+### 29. GET /users/me with no token (expect 401)
+GET http://localhost:3000/users/me
+
+### 30. GET /users/me with an invalid/malformed token (expect 401)
+GET http://localhost:3000/users/me
+Authorization: Bearer this.is.not.a.real.token
+
+### 31. GET /users/me with a valid token (expect 200)
+GET http://localhost:3000/users/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGF5bG9yQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTEwMDg5NzMsImV4cCI6MTc5MTAxNjE3M30.61vwomKJf9o2eC9YgV3683s3NG2ap8vtmmX52kLQgRA 
+
+
+### 32. Create a project as Taylor (expect 201)
+POST http://localhost:3000/projects
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGF5bG9yQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTEwMTY4NDUsImV4cCI6MTc5MTAyNDA0NX0.iMODHxMktRu4luN_wq0H5EnrLYS6218Cw4_9BLjP7NY
+
+{
+  "name": "Taylor's New Project",
+  "description": "Owned by Taylor"
+}
+
+### 33. Create a project with NO token (expect 401)
+POST http://localhost:3000/projects
+Content-Type: application/json
+
+{
+  "name": "Should fail",
+  "description": "No auth"
+}
+
+### 34. Taylor tries to update Sam's project (project id 1, expect 403)
+PATCH http://localhost:3000/projects/1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGF5bG9yQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTEwMTY4NDUsImV4cCI6MTc5MTAyNDA0NX0.iMODHxMktRu4luN_wq0H5EnrLYS6218Cw4_9BLjP7NY
+
+{
+  "description": "Taylor trying to hijack this"
+}
+
+### 35. Taylor updates her OWN project (expect 200)
+PATCH http://localhost:3000/projects/5
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGF5bG9yQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTEwMTY4NDUsImV4cCI6MTc5MTAyNDA0NX0.iMODHxMktRu4luN_wq0H5EnrLYS6218Cw4_9BLjP7NY
+
+{
+  "description": "Taylor's real update"
+}
+
+
+### 36. Login as Sam (admin) (expect 200)
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "sam@example.com",
+  "password": "adminpass123"
+}
+
+### 37. Sam (admin) lists all users (expect 200)
+GET http://localhost:3000/admin/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoic2FtQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzkxMDI3OTMyLCJleHAiOjE3OTEwMzUxMzJ9.fUQDK9l5NTAamWkTWMqj4E_cIlWN7tH18QC3c1K0a7I
+
+### 38. Taylor (non-admin) tries to list all users (expect 403)
+GET http://localhost:3000/admin/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGF5bG9yQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTEwMjgxMTcsImV4cCI6MTc5MTAzNTMxN30.1QOtkh67wborJJgYEuyck8FwdirrlZG6vmzBmEIIOIA
+
+### 39. List all users with no token (expect 401)
+GET http://localhost:3000/admin/users
+
+
+### 40. Register with an invalid email format (expect 400)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "name": "Bad Email",
+  "email": "not-an-email",
+  "password": "validpassword123"
+}
+
+### 41. Create a project with name too long (expect 400)
+POST http://localhost:3000/projects
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGF5bG9yQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTEwMjk4NzcsImV4cCI6MTc5MTAzNzA3N30.ZH1pe6CowSq6_CRGPWATONb5k42gGjvQReHBsjdhcIQ
+
+{
+  "name": "This name is way way way way way way way way way way way way way way way way way way way way way way way way too long for the one hundred and fifty character limit we set in the schema definition",
+  "description": "test"
+}
+
+### 42. Create a task with an invalid status value (expect 400)
+POST http://localhost:3000/projects/1/tasks
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGF5bG9yQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTEwMjk4NzcsImV4cCI6MTc5MTAzNzA3N30.ZH1pe6CowSq6_CRGPWATONb5k42gGjvQReHBsjdhcIQ
+
+
+{
+  "title": "Bad status test",
+  "status": "almost-done"
+}
+
+
+### 43. Duplicate email registration (expect 409)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "name": "Duplicate Test",
+  "email": "taylor@example.com",
+  "password": "anotherpassword123"
+}
