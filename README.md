@@ -310,3 +310,48 @@ Tested in `requests.http`: register (success, duplicate email, short password), 
 - `401 Unauthorized` means identity wasn't proven (no/bad/expired token). `403 Forbidden` means identity is known but the action isn't permitted - that distinction matters for Day 7.
 - Middleware can block a request before it reaches a route handler simply by not calling `next()` - this is how `authenticate` protects `/users/me`.
 - `JWT_SECRET` must come from an environment variable, never hard-coded, because anyone with the secret can forge valid tokens for any user.
+
+
+## Day 7 - Authorization, Validation and Error Handling
+
+### New endpoint
+| Method | Endpoint | Purpose | Success |
+|---|---|---|---|
+| GET | /admin/users | List all users (admin only) | 200 / 403 / 401 |
+
+### Authorization rules
+- Any authenticated user may create a project. The owner is always taken from the authenticated token (`req.user.userId`), never from the request body - this prevents a client from claiming ownership on someone else's behalf.
+- Only a project's owner (or an admin) may update or delete it. Tasks inherit this rule from their parent project, since tasks have no owner of their own.
+- Reading projects and tasks remains public; writing requires authentication.
+- `role: 'admin'` is required for `/admin/users`, enforced by a dedicated `requireAdmin` middleware that runs after `authenticate`.
+
+### Validation
+Request bodies are validated with [Zod](https://zod.dev) via a reusable `validate(schema)` middleware, before any controller or database logic runs:
+- Registration: name required, valid email format, password minimum length.
+- Project creation/update: name required with a maximum length, description length capped.
+- Task creation/update: title required with a maximum length, status restricted to an exact enum (`todo`, `in-progress`, `done`), `assignedTo` must be a positive integer.
+
+### Error handling
+A centralized `errorHandler` middleware (last in the middleware chain) logs full error details server-side (timestamp, method, path, and the real error) but only ever returns a safe, generic message to the client. Known PostgreSQL error codes (unique constraint violations, foreign key violations) are mapped to appropriate 400/409 responses; anything else falls back to a generic 500 with no leaked internal details.
+
+### Status codes used deliberately
+| Code | Meaning in this project |
+|---|---|
+| 200 | Successful read/update |
+| 201 | Resource created |
+| 204 | Resource deleted, no content |
+| 400 | Invalid request data (validation failure) |
+| 401 | Missing, invalid, or expired authentication |
+| 403 | Authenticated, but not permitted (wrong owner, wrong role) |
+| 404 | Resource not found |
+| 409 | Conflict (duplicate email) |
+| 500 | Unexpected server error (generic message only) |
+
+### Testing
+Tested at least 13 negative scenarios against the real running API, including: non-owner attempting to update/delete a project (403), missing token on write endpoints (401), non-admin on an admin route (403), duplicate email (409), invalid email format (400), overly long project name (400), invalid task status (400), expired token (401), malformed token (401), unknown project/task ids (404), and a real database connection failure confirmed to return a generic 500 with no leaked connection details (verified both the client response and the full server-side log for the same failure).
+
+### Learning notes
+- `401` means identity isn't established (no/bad/expired token). `403` means identity is known but the specific action isn't permitted. Mixing these up is a common mistake - I kept them deliberately separate throughout.
+- Never trust an identifier (like an owner id) from the request body when the authenticated identity is already available from a verified token - always prefer `req.user`.
+- Validation (is this data shaped correctly?) and authorization (is this specific user allowed to do this?) are different concerns and happen in a specific order: validate the shape first, then check permission, then touch the database.
+- A centralized error handler lets every route log consistently and guarantees the client never sees implementation details, even for failures no developer anticipated (confirmed directly by breaking the database connection and observing the generic 500).
