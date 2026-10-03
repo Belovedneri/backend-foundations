@@ -3,6 +3,7 @@ import taskRoutes from './routes/taskRoutes.js'
 import projectRoutes from './routes/projectRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 import userRoutes from './routes/userRoutes.js'
+import adminRoutes from './routes/adminRoutes.js'
 import { requestLogger } from './middleware/requestLogger.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
@@ -17,6 +18,7 @@ app.get('/health', (_req, res) => {
 
 app.use('/auth', authRoutes)
 app.use('/users', userRoutes)
+app.use('/admin', adminRoutes)
 app.use('/projects', projectRoutes)
 app.use('/tasks', taskRoutes)
 

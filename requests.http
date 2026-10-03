@@ -233,3 +233,24 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtY
 {
   "description": "Taylor's real update"
 }
+
+
+### 36. Login as Sam (admin) (expect 200)
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "sam@example.com",
+  "password": "adminpass123"
+}
+
+### 37. Sam (admin) lists all users (expect 200)
+GET http://localhost:3000/admin/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoic2FtQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzkxMDI3OTMyLCJleHAiOjE3OTEwMzUxMzJ9.fUQDK9l5NTAamWkTWMqj4E_cIlWN7tH18QC3c1K0a7I
+
+### 38. Taylor (non-admin) tries to list all users (expect 403)
+GET http://localhost:3000/admin/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGF5bG9yQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTEwMjgxMTcsImV4cCI6MTc5MTAzNTMxN30.1QOtkh67wborJJgYEuyck8FwdirrlZG6vmzBmEIIOIA
+
+### 39. List all users with no token (expect 401)
+GET http://localhost:3000/admin/users

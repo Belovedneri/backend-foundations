@@ -28,3 +28,8 @@ export async function findUserById(id: number): Promise<UserRow | null> {
   const result = await pool.query<UserRow>('SELECT * FROM users WHERE id = $1', [id])
   return result.rows[0] ?? null
 }
+
+export async function findAllUsers(): Promise<UserRow[]> {
+  const result = await pool.query<UserRow>('SELECT * FROM users ORDER BY id')
+  return result.rows
+}

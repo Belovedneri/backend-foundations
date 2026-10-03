@@ -1,6 +1,6 @@
 import type { Response, NextFunction } from 'express'
 import type { AuthenticatedRequest } from '../middleware/authenticate.js'
-import { findUserById } from '../repositories/userRepository.js'
+import { findUserById, findAllUsers } from '../repositories/userRepository.js'
 
 export async function getMe(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -17,6 +17,16 @@ export async function getMe(req: AuthenticatedRequest, res: Response, next: Next
 
     const { password_hash, ...safeUser } = user
     res.status(200).json({ success: true, data: safeUser })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function listAllUsers(_req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const users = await findAllUsers()
+    const safeUsers = users.map(({ password_hash, ...safeUser }) => safeUser)
+    res.status(200).json({ success: true, data: safeUsers })
   } catch (error) {
     next(error)
   }
