@@ -1,4 +1,5 @@
-import type { Request, Response, NextFunction } from 'express'
+import type { Response, NextFunction } from 'express'
+import type { AuthenticatedRequest } from '../middleware/authenticate.js'
 import { addTask, getTasksByProjectId, getTaskById, editTask, removeTask } from '../services/taskService.js'
 import { getProjectById } from '../services/projectService.js'
 
@@ -18,8 +19,8 @@ function parsePositiveInt(raw: unknown): number | null {
   return Number.isInteger(id) && id > 0 ? id : null
 }
 
-// POST /projects/:id/tasks
-export async function createTaskForProject(req: Request, res: Response, next: NextFunction): Promise<void> {
+// POST /projects/:id/tasks - only the project owner (or admin) may add tasks
+export async function createTaskForProject(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const projectId = parseId(req.params.id)
     if (projectId === null) {
@@ -30,6 +31,11 @@ export async function createTaskForProject(req: Request, res: Response, next: Ne
     const project = await getProjectById(projectId)
     if (!project) {
       res.status(404).json({ success: false, error: 'Project not found' })
+      return
+    }
+
+    if (project.owner_id !== req.user!.userId && req.user!.role !== 'admin') {
+      res.status(403).json({ success: false, error: 'Only the project owner may add tasks to this project' })
       return
     }
 
@@ -63,8 +69,8 @@ export async function createTaskForProject(req: Request, res: Response, next: Ne
   }
 }
 
-// GET /projects/:id/tasks
-export async function listTasksForProject(req: Request, res: Response, next: NextFunction): Promise<void> {
+// GET /projects/:id/tasks - public
+export async function listTasksForProject(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const projectId = parseId(req.params.id)
     if (projectId === null) {
@@ -85,12 +91,24 @@ export async function listTasksForProject(req: Request, res: Response, next: Nex
   }
 }
 
-// PATCH /tasks/:id
-export async function patchTask(req: Request, res: Response, next: NextFunction): Promise<void> {
+// PATCH /tasks/:id - only the parent project's owner (or admin) may update
+export async function patchTask(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const id = parseId(req.params.id)
     if (id === null) {
       res.status(400).json({ success: false, error: 'id must be a positive integer' })
+      return
+    }
+
+    const existing = await getTaskById(id)
+    if (!existing) {
+      res.status(404).json({ success: false, error: 'Task not found' })
+      return
+    }
+
+    const project = await getProjectById(existing.project_id)
+    if (!project || (project.owner_id !== req.user!.userId && req.user!.role !== 'admin')) {
+      res.status(403).json({ success: false, error: 'You do not have permission to update this task' })
       return
     }
 
@@ -136,12 +154,6 @@ export async function patchTask(req: Request, res: Response, next: NextFunction)
       return
     }
 
-    const existing = await getTaskById(id)
-    if (!existing) {
-      res.status(404).json({ success: false, error: 'Task not found' })
-      return
-    }
-
     const updated = await editTask(id, updates)
     res.status(200).json({ success: true, data: updated })
   } catch (error) {
@@ -149,14 +161,27 @@ export async function patchTask(req: Request, res: Response, next: NextFunction)
   }
 }
 
-// DELETE /tasks/:id
-export async function removeTaskHandler(req: Request, res: Response, next: NextFunction): Promise<void> {
+// DELETE /tasks/:id - only the parent project's owner (or admin) may delete
+export async function removeTaskHandler(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const id = parseId(req.params.id)
     if (id === null) {
       res.status(400).json({ success: false, error: 'id must be a positive integer' })
       return
     }
+
+    const existing = await getTaskById(id)
+    if (!existing) {
+      res.status(404).json({ success: false, error: 'Task not found' })
+      return
+    }
+
+    const project = await getProjectById(existing.project_id)
+    if (!project || (project.owner_id !== req.user!.userId && req.user!.role !== 'admin')) {
+      res.status(403).json({ success: false, error: 'You do not have permission to delete this task' })
+      return
+    }
+
     const deleted = await removeTask(id)
     if (!deleted) {
       res.status(404).json({ success: false, error: 'Task not found' })

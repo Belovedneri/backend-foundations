@@ -157,7 +157,6 @@ Content-Type: application/json
   "password": "abc"
 }
 
-
 ### 26. Login with correct credentials (expect 200)
 POST http://localhost:3000/auth/login
 Content-Type: application/json
@@ -195,4 +194,42 @@ Authorization: Bearer this.is.not.a.real.token
 
 ### 31. GET /users/me with a valid token (expect 200)
 GET http://localhost:3000/users/me
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGF5bG9yQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTEwMDg5NzMsImV4cCI6MTc5MTAxNjE3M30.61vwomKJf9o2eC9YgV3683s3NG2ap8vtmmX52kLQgRA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGF5bG9yQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTEwMDg5NzMsImV4cCI6MTc5MTAxNjE3M30.61vwomKJf9o2eC9YgV3683s3NG2ap8vtmmX52kLQgRA 
+
+
+### 32. Create a project as Taylor (expect 201)
+POST http://localhost:3000/projects
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGF5bG9yQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTEwMTY4NDUsImV4cCI6MTc5MTAyNDA0NX0.iMODHxMktRu4luN_wq0H5EnrLYS6218Cw4_9BLjP7NY
+
+{
+  "name": "Taylor's New Project",
+  "description": "Owned by Taylor"
+}
+
+### 33. Create a project with NO token (expect 401)
+POST http://localhost:3000/projects
+Content-Type: application/json
+
+{
+  "name": "Should fail",
+  "description": "No auth"
+}
+
+### 34. Taylor tries to update Sam's project (project id 1, expect 403)
+PATCH http://localhost:3000/projects/1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGF5bG9yQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTEwMTY4NDUsImV4cCI6MTc5MTAyNDA0NX0.iMODHxMktRu4luN_wq0H5EnrLYS6218Cw4_9BLjP7NY
+
+{
+  "description": "Taylor trying to hijack this"
+}
+
+### 35. Taylor updates her OWN project (expect 200)
+PATCH http://localhost:3000/projects/5
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGF5bG9yQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTEwMTY4NDUsImV4cCI6MTc5MTAyNDA0NX0.iMODHxMktRu4luN_wq0H5EnrLYS6218Cw4_9BLjP7NY
+
+{
+  "description": "Taylor's real update"
+}
