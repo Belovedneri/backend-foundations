@@ -279,3 +279,34 @@ Created a task, restarted the server completely (`Ctrl+C` then `npm run dev`), a
 - `async`/`await` is essential here because a database query takes real time (a round trip to PostgreSQL), unlike the instant in-memory array operations from Days 1-3.
 - Checking that a parent resource exists (e.g. a project) before creating a child resource (a task) gives a clean 404 instead of letting a foreign key constraint fail with a confusing 500 error.
 - `RETURNING *` in an INSERT or UPDATE statement returns the affected row immediately, avoiding a second query just to see what changed.
+
+
+## Day 6 - Authentication: Passwords and JWT
+
+### New endpoints
+| Method | Endpoint | Purpose | Success |
+|---|---|---|---|
+| POST | /auth/register | Register a new user | 201 / 400 / 409 |
+| POST | /auth/login | Log in and receive a JWT | 200 / 400 / 401 |
+| GET | /users/me | Get the current authenticated user (protected) | 200 / 401 |
+
+### How authentication works
+Registration hashes the password with bcrypt before storing it - the real password is never saved anywhere. Login looks up the user by email, uses `bcrypt.compare()` to check the supplied password against the stored hash (without ever reversing the hash), and if it matches, signs a JWT containing the user's id, email and role, valid for 2 hours.
+
+The JWT is sent back to the client, which must include it on future requests as `Authorization: Bearer <token>`. An `authenticate` middleware checks this header, verifies the token's signature and expiry, and attaches the decoded payload to `req.user` - if verification fails for any reason (missing header, invalid signature, expired token), the request is rejected with 401 before it ever reaches the route handler.
+
+### Hashing vs. encryption
+Hashing is one-way: there is no way to turn a bcrypt hash back into the original password. Login works by hashing the newly supplied password's comparison through `bcrypt.compare()`, which re-derives the hash using the salt stored inside the existing hash and checks whether the result matches - never by decrypting anything. I confirmed this directly: hashing the same password twice produces two different-looking hashes (because of a random salt), yet both still correctly verify against the original password.
+
+### What a JWT proves (and doesn't)
+A JWT's signature proves the token was issued by this server and hasn't been tampered with since. It does NOT mean the contents are secret - the payload is only base64-encoded, not encrypted, and I verified this directly: decoding a token's payload with no secret key at all revealed the real userId and email in plain text. A JWT also doesn't prove the current holder is the legitimate user - if a valid token is stolen, the server has no way to distinguish the thief from the real user until the token expires.
+
+### Testing
+Tested in `requests.http`: register (success, duplicate email, short password), login (success, wrong password, unknown email - both failures return an identical generic message), and `/users/me` with no token, an invalid token, an expired token, and a valid token.
+
+### Learning notes
+- Authentication answers "who are you?" (proven at login). Authorization answers "what are you allowed to do?" (checked afterward, using data like the `role` column - built in Day 7).
+- A generic "Invalid email or password" message for both a wrong password and an unknown email prevents an attacker from learning which emails are registered (user enumeration).
+- `401 Unauthorized` means identity wasn't proven (no/bad/expired token). `403 Forbidden` means identity is known but the action isn't permitted - that distinction matters for Day 7.
+- Middleware can block a request before it reaches a route handler simply by not calling `next()` - this is how `authenticate` protects `/users/me`.
+- `JWT_SECRET` must come from an environment variable, never hard-coded, because anyone with the secret can forge valid tokens for any user.
