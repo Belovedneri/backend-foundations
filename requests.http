@@ -156,3 +156,31 @@ Content-Type: application/json
   "email": "short@example.com",
   "password": "abc"
 }
+
+
+### 26. Login with correct credentials (expect 200)
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "taylor@example.com",
+  "password": "supersecret123"
+}
+
+### 27. Login with wrong password (expect 401)
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "taylor@example.com",
+  "password": "wrongpassword"
+}
+
+### 28. Login with an email that doesn't exist (expect 401)
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "nobody@example.com",
+  "password": "whatever123"
+}
