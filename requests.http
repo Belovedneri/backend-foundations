@@ -254,3 +254,35 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtY
 
 ### 39. List all users with no token (expect 401)
 GET http://localhost:3000/admin/users
+
+
+### 40. Register with an invalid email format (expect 400)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "name": "Bad Email",
+  "email": "not-an-email",
+  "password": "validpassword123"
+}
+
+### 41. Create a project with name too long (expect 400)
+POST http://localhost:3000/projects
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGF5bG9yQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTEwMjk4NzcsImV4cCI6MTc5MTAzNzA3N30.ZH1pe6CowSq6_CRGPWATONb5k42gGjvQReHBsjdhcIQ
+
+{
+  "name": "This name is way way way way way way way way way way way way way way way way way way way way way way way way too long for the one hundred and fifty character limit we set in the schema definition",
+  "description": "test"
+}
+
+### 42. Create a task with an invalid status value (expect 400)
+POST http://localhost:3000/projects/1/tasks
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGF5bG9yQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTEwMjk4NzcsImV4cCI6MTc5MTAzNzA3N30.ZH1pe6CowSq6_CRGPWATONb5k42gGjvQReHBsjdhcIQ
+
+
+{
+  "title": "Bad status test",
+  "status": "almost-done"
+}

@@ -9,21 +9,9 @@ function parseId(raw: unknown): number | null {
 
 export async function createProject(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { name, description } = req.body ?? {}
-
-    if (typeof name !== 'string' || name.trim() === '') {
-      res.status(400).json({ success: false, error: 'name is required and must be a non-empty string' })
-      return
-    }
-    if (description !== undefined && typeof description !== 'string') {
-      res.status(400).json({ success: false, error: 'description must be a string' })
-      return
-    }
-
-    // The owner is ALWAYS the authenticated user - never trust a client-supplied ownerId
+    const { name, description } = req.body
     const ownerId = req.user!.userId
-
-    const project = await addProject(name.trim(), description ?? null, ownerId)
+    const project = await addProject(name, description ?? null, ownerId)
     res.status(201).json({ success: true, data: project })
   } catch (error) {
     next(error)
@@ -71,23 +59,12 @@ export async function patchProject(req: AuthenticatedRequest, res: Response, nex
       return
     }
 
-    // Ownership check: only the owner (or an admin) may update this project
     if (existing.owner_id !== req.user!.userId && req.user!.role !== 'admin') {
       res.status(403).json({ success: false, error: 'You do not have permission to update this project' })
       return
     }
 
-    const { name, description } = req.body ?? {}
-    if (name !== undefined && (typeof name !== 'string' || name.trim() === '')) {
-      res.status(400).json({ success: false, error: 'name must be a non-empty string' })
-      return
-    }
-    if (description !== undefined && typeof description !== 'string') {
-      res.status(400).json({ success: false, error: 'description must be a string' })
-      return
-    }
-
-    const updated = await editProject(id, { name, description })
+    const updated = await editProject(id, req.body)
     res.status(200).json({ success: true, data: updated })
   } catch (error) {
     next(error)
@@ -108,7 +85,6 @@ export async function removeProjectHandler(req: AuthenticatedRequest, res: Respo
       return
     }
 
-    // Ownership check: only the owner (or an admin) may delete this project
     if (existing.owner_id !== req.user!.userId && req.user!.role !== 'admin') {
       res.status(403).json({ success: false, error: 'You do not have permission to delete this project' })
       return

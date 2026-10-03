@@ -3,23 +3,11 @@ import type { AuthenticatedRequest } from '../middleware/authenticate.js'
 import { addTask, getTasksByProjectId, getTaskById, editTask, removeTask } from '../services/taskService.js'
 import { getProjectById } from '../services/projectService.js'
 
-const VALID_STATUSES: readonly string[] = ['todo', 'in-progress', 'done']
-
-function isTaskStatus(value: unknown): value is string {
-  return typeof value === 'string' && VALID_STATUSES.includes(value)
-}
-
 function parseId(raw: unknown): number | null {
   const id = typeof raw === 'string' ? Number(raw) : NaN
   return Number.isInteger(id) && id > 0 ? id : null
 }
 
-function parsePositiveInt(raw: unknown): number | null {
-  const id = typeof raw === 'number' ? raw : typeof raw === 'string' ? Number(raw) : NaN
-  return Number.isInteger(id) && id > 0 ? id : null
-}
-
-// POST /projects/:id/tasks - only the project owner (or admin) may add tasks
 export async function createTaskForProject(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const projectId = parseId(req.params.id)
@@ -39,37 +27,14 @@ export async function createTaskForProject(req: AuthenticatedRequest, res: Respo
       return
     }
 
-    const { title, description, status, assignedTo } = req.body ?? {}
-
-    if (typeof title !== 'string' || title.trim() === '') {
-      res.status(400).json({ success: false, error: 'title is required and must be a non-empty string' })
-      return
-    }
-    if (description !== undefined && typeof description !== 'string') {
-      res.status(400).json({ success: false, error: 'description must be a string' })
-      return
-    }
-    if (status !== undefined && !isTaskStatus(status)) {
-      res.status(400).json({ success: false, error: 'status must be one of: todo, in-progress, done' })
-      return
-    }
-    let parsedAssignedTo: number | null = null
-    if (assignedTo !== undefined && assignedTo !== null) {
-      parsedAssignedTo = parsePositiveInt(assignedTo)
-      if (parsedAssignedTo === null) {
-        res.status(400).json({ success: false, error: 'assignedTo must be a positive integer' })
-        return
-      }
-    }
-
-    const task = await addTask(title.trim(), description ?? null, status ?? 'todo', projectId, parsedAssignedTo)
+    const { title, description, status, assignedTo } = req.body
+    const task = await addTask(title, description ?? null, status ?? 'todo', projectId, assignedTo ?? null)
     res.status(201).json({ success: true, data: task })
   } catch (error) {
     next(error)
   }
 }
 
-// GET /projects/:id/tasks - public
 export async function listTasksForProject(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const projectId = parseId(req.params.id)
@@ -91,7 +56,6 @@ export async function listTasksForProject(req: AuthenticatedRequest, res: Respon
   }
 }
 
-// PATCH /tasks/:id - only the parent project's owner (or admin) may update
 export async function patchTask(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const id = parseId(req.params.id)
@@ -112,56 +76,13 @@ export async function patchTask(req: AuthenticatedRequest, res: Response, next: 
       return
     }
 
-    const { title, description, status, assignedTo } = req.body ?? {}
-    const updates: { title?: string; description?: string | null; status?: string; assignedTo?: number | null } = {}
-
-    if (title !== undefined) {
-      if (typeof title !== 'string' || title.trim() === '') {
-        res.status(400).json({ success: false, error: 'title must be a non-empty string' })
-        return
-      }
-      updates.title = title.trim()
-    }
-    if (description !== undefined) {
-      if (typeof description !== 'string') {
-        res.status(400).json({ success: false, error: 'description must be a string' })
-        return
-      }
-      updates.description = description
-    }
-    if (status !== undefined) {
-      if (!isTaskStatus(status)) {
-        res.status(400).json({ success: false, error: 'status must be one of: todo, in-progress, done' })
-        return
-      }
-      updates.status = status
-    }
-    if (assignedTo !== undefined) {
-      if (assignedTo === null) {
-        updates.assignedTo = null
-      } else {
-        const parsed = parsePositiveInt(assignedTo)
-        if (parsed === null) {
-          res.status(400).json({ success: false, error: 'assignedTo must be a positive integer or null' })
-          return
-        }
-        updates.assignedTo = parsed
-      }
-    }
-
-    if (Object.keys(updates).length === 0) {
-      res.status(400).json({ success: false, error: 'No valid fields to update' })
-      return
-    }
-
-    const updated = await editTask(id, updates)
+    const updated = await editTask(id, req.body)
     res.status(200).json({ success: true, data: updated })
   } catch (error) {
     next(error)
   }
 }
 
-// DELETE /tasks/:id - only the parent project's owner (or admin) may delete
 export async function removeTaskHandler(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const id = parseId(req.params.id)
